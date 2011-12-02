@@ -76,6 +76,30 @@ class UrlGeneratorTest < Test::Unit::TestCase
     assert_equal "the%20expected%20result", result
   end
 
+  should "URL-escape brackets on path but not on host" do
+    expected = "http://[FEDC::3210]/avatar[2]_thumb.png"
+    mock_attachment = MockAttachment.new
+    mock_interpolator = MockInterpolator.new(:result => expected)
+    options = Paperclip::Options.new(mock_attachment, :interpolator => mock_interpolator)
+    url_generator = Paperclip::UrlGenerator.new(mock_attachment, options)
+
+    result = url_generator.for(:style_name, {:escape => true})
+
+    assert_equal "http://[FEDC::3210]/avatar%5B2%5D_thumb.png", result
+  end
+
+  should "URL-escape number sign on filename but not when really an anchor" do
+    expected = "http://host.org/avatar#_thumb.png#anchor"
+    mock_attachment = MockAttachment.new
+    mock_interpolator = MockInterpolator.new(:result => expected)
+    options = Paperclip::Options.new(mock_attachment, :interpolator => mock_interpolator)
+    url_generator = Paperclip::UrlGenerator.new(mock_attachment, options)
+
+    result = url_generator.for(:style_name, {:escape => true})
+
+    assert_equal "http://host.org/avatar%23_thumb.png#anchor", result
+  end
+
   should "escape the result of the interpolator using a method on the object, if asked to escape" do
     expected = Class.new do
       def escape
